@@ -24,87 +24,83 @@ function App() {
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentItems = albums.slice(indexOfFirstItem, indexOfLastItem);
 
-
   const handleSubmit = (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  if (!userId || !id || !title) {
-    alert('Por favor, complete todos los campos.');
-    return;
-  }
+    if (!userId || !id || !title) {
+      alert('Por favor, complete todos los campos.');
+      return;
+    }
 
-  const album = {
-    userId: parseInt(userId),
-    id: parseInt(id),
-    title: title,
+    const album = {
+      userId: parseInt(userId),
+      id: parseInt(id),
+      title: title,
+    };
+
+    if (!isEditing) {
+      fetch('https://jsonplaceholder.typicode.com/albums', {
+        method: 'POST',
+        body: JSON.stringify(album),
+        headers: {
+          'Content-type': 'application/json; charset=UTF-8',
+        },
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          setAlbums([data, ...albums]);
+          setCurrentPage(1);
+          alert('Álbum creado con éxito');
+        })
+        .catch((error) => {
+          console.error('Error al crear el álbum:', error);
+          alert('Error al crear el álbum');
+        });
+    } else {
+      fetch(`https://jsonplaceholder.typicode.com/albums/${idEdit}`, {
+        method: 'PUT',
+        body: JSON.stringify(album),
+        headers: {
+          'Content-type': 'application/json; charset=UTF-8',
+        },
+      })
+        .then((response) => response.json())
+        .then(() => {
+          const updatedAlbums = albums.map((item) => 
+            item.id === parseInt(idEdit) ? { ...item, title: title, userId: parseInt(userId) } : item
+          );
+          setAlbums(updatedAlbums);
+          setIsEditing(false);
+          alert('Álbum actualizado con éxito');
+        })
+        .catch((error) => {
+          console.error('Error al actualizar el álbum:', error);
+          alert('Error al actualizar el álbum');
+        });
+    }
+
+    setUserId('');
+    setId('');
+    setTitle('');
   };
 
-  if (!isEditing) {
-    fetch('https://jsonplaceholder.typicode.com/albums', {
-      method: 'POST',
-      body: JSON.stringify(album),
-      headers: {
-        'Content-type': 'application/json; charset=UTF-8',
-      },
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        setAlbums([...albums, data]);
-        alert('Álbum creado con éxito');
+  const handleDelete = (id) => {
+    const confirmDelete = window.confirm('¿Estás seguro de que quieres eliminar este álbum?');
+    if (confirmDelete) {
+      fetch(`https://jsonplaceholder.typicode.com/albums/${id}`, {
+        method: 'DELETE',
       })
-      .catch((error) => {
-        console.error('Error al crear el álbum:', error);
-        alert('Error al crear el álbum');
-      });
-  } else {
-    fetch(`https://jsonplaceholder.typicode.com/albums/${idEdit}`, {
-      method: 'PUT',
-      body: JSON.stringify(album),
-      headers: {
-        'Content-type': 'application/json; charset=UTF-8',
-      },
-    })
-      .then((response) => response.json())
-      .then(() => {
-        const updatedAlbums = currentItems.map((album) =>
-          album.id === idEdit ? album : album
-        );
-        setAlbums(updatedAlbums);
-        setIsEditing(false);
-        alert('Álbum actualizado con éxito');
-      })
-      .catch((error) => {
-        console.error('Error al actualizar el álbum:', error);
-        alert('Error al actualizar el álbum');
-      });
-  }
-
-  setUserId('');
-  setId('');
-  setTitle('');
-};
-
-const handleDelete = (id) => {
-  const confirmDelete = window.confirm('¿Estás seguro de que quieres eliminar este álbum?');
-  if (confirmDelete) {
-    fetch(`https://jsonplaceholder.typicode.com/albums/${id}`, {
-      method: 'DELETE',
-    })
-      .then(() => {
-        const updatedAlbums = albums.filter((album) => album.id !== id);
-        setAlbums(updatedAlbums);
-        alert('Álbum eliminado con éxito');
-      })
-      .catch((error) => {
-        console.error('Error al eliminar el álbum:', error);
-        alert('Error al eliminar el álbum');
-      });
-  }
-};
-window.scrollTo({
-  top: 1000,
-  behavior: 'smooth'
-});
+        .then(() => {
+          const updatedAlbums = albums.filter((album) => album.id !== id);
+          setAlbums(updatedAlbums);
+          alert('Álbum eliminado con éxito');
+        })
+        .catch((error) => {
+          console.error('Error al eliminar el álbum:', error);
+          alert('Error al eliminar el álbum');
+        });
+    }
+  };
 
   const handleEdit = (id) => {
     const album = albums.find((album) => album.id === id);
@@ -114,8 +110,6 @@ window.scrollTo({
     setTitle(album.title);
     setIdEdit(id);
   };
-   
-
   return (
     
   <div className="App">
